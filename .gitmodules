@@ -1,0 +1,3 @@
+[submodule "icepack_wavefracspec"]
+	path = icepack_wavefracspec
+	url = https://github.com/Felixstd/icepack_wavefracspec.git
