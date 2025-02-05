@@ -12,9 +12,30 @@ All of the stresses are in MPa.
 plt.style.use('science')
 
 
-def threepointbending():
+def threepointbending(F, l, b, hi, unc_dim, unc_f, uncertainty = False):
+    """
+    This function computes the flexural strength from cantiliver tests. 
+    Args:
+        F (_type_): Measured force at failure
+        l (_type_): length of the ice samples
+        b (_type_): width of the beam
+        hi (_type_): ice thickness
+    """
+    sigma_f = (3/2)*F*l/(b*hi**2)
     
-    return
+    if uncertainty:
+        unc_F = (3/2)*l/(b*hi**2)*unc_f
+        unc_l = (3/2)*F/(b*hi**2)*unc_dim
+        unc_b = (3/2)*F*l/((b*hi)**2)*unc_dim
+        unc_hi = 2*(3/2)*F*l/(b*hi**3)*unc_dim
+
+        unc_sigmaf = np.sqrt(unc_F**2 + unc_l**2 + unc_b**2 + unc_hi**2)
+    
+        return sigma_f, unc_sigmaf
+    
+    else:
+        return sigma_f
+    
 
 
 def cantilever(F, lb, b, hi, unc_dim, unc_f, uncertainty = False):
