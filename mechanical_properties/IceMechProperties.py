@@ -21,8 +21,8 @@ def threepointbending(F, l, b, hi, unc_dim, unc_f, uncertainty = False):
         b (_type_): width of the beam
         hi (_type_): ice thickness
     """
-    sigma_f = (3/2)*F*l/(b*hi**2)
     
+    sigma_f = (3/2)*F*l/(b*hi**2)
     if uncertainty:
         unc_F = (3/2)*l/(b*hi**2)*unc_f
         unc_l = (3/2)*F/(b*hi**2)*unc_dim
@@ -32,6 +32,8 @@ def threepointbending(F, l, b, hi, unc_dim, unc_f, uncertainty = False):
         unc_sigmaf = np.sqrt(unc_F**2 + unc_l**2 + unc_b**2 + unc_hi**2)
     
         return sigma_f, unc_sigmaf
+    
+    
     
     else:
         return sigma_f
