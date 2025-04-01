@@ -84,8 +84,13 @@ def extract_data(dir_files, data_files, file_dim, Floe, Temp, f1 = 10, f2 = 100,
     unc_flexural_strength = np.zeros(len(data_files))
     volume_beams = np.zeros(len(data_files))
     experiments = np.arange(0, len(data_files))
+    flexural_strength_buoyancy = np.zeros(len(data_files))
     force_experiments = []
     time_experiments = []
+    
+    flexural_strength_cantilever  = np.empty(0)
+    flexural_strength_cantilever_buoyancy = np.empty(0)
+    flexural_strength_threepoint = np.empty(0)
     
     _, dic_dim = read_data(dir_files, data_files[0], file_dim, 1, Floe = Floe, Temperature=Temp )
     lengths = dic_dim["lengths"]
@@ -105,7 +110,7 @@ def extract_data(dir_files, data_files, file_dim, Floe, Temp, f1 = 10, f2 = 100,
         dic_exp, dic_dim = read_data(dir_files, file, file_dim, exp)
         
         force_exp = dic_exp['force']
-        max_force = np.max(force_exp)
+        time_exp = dic_exp['timestep']*1/f2
         
         length_exp, lb_exp, width_exp, thickness_exp = \
             lengths[exp]/100, lb[exp]/100, width[exp]/100, thickness[exp]/100
@@ -113,22 +118,30 @@ def extract_data(dir_files, data_files, file_dim, Floe, Temp, f1 = 10, f2 = 100,
         volume_beams[exp] = length_exp*width_exp*thickness_exp*(100**3)
         
         if types_exp[exp] == 'cant':
+            max_force= np.max(force_exp)
             flexural_strength[exp], unc_flexural_strength[exp] = \
                 me.cantilever(max_force, lb_exp, width_exp, thickness_exp,unc_dim,unc_force, uncertainty=True )
+            flexural_strength_cantilever = np.append(flexural_strength_cantilever, flexural_strength[exp])
+            
+            flexural_strength_buoyancy[exp] = me.sigmaf_buoyancyCanti(max_force, lb_exp, width_exp, thickness_exp, me.ElasticModulus)
+            flexural_strength_cantilever_buoyancy = np.append(flexural_strength_cantilever_buoyancy, flexural_strength_buoyancy[exp])
+            # print(flexural_strength_buoyancy[exp])
                 
         elif types_exp[exp] == '3pt':
-            # print('here', exp)
+            max_force, idx_force = me.maxforce_3point(force_exp, time_exp)
             flexural_strength[exp], unc_flexural_strength[exp] = \
-                me.threepointbending(max_force, length_exp, width_exp, thickness_exp, unc_dim,unc_force, uncertainty=True )
-
-        time = dic_exp['timestep']*1/f2
+                me.threepointbending(max_force, length_exp, width_exp, thickness_exp, unc_dim,unc_force, uncertainty=True)
+            flexural_strength_threepoint = np.append(flexural_strength_threepoint, flexural_strength[exp])
+            
+            flexural_strength_buoyancy[exp], _ = me.threepointbending(max_force, length_exp, width_exp, thickness_exp, unc_dim,unc_force, uncertainty=True)
         
         force_experiments.append(force_exp)
-        time_experiments.append(time)
+        time_experiments.append(time_exp)
         
-    return force_experiments, flexural_strength, unc_flexural_strength, volume_beams, experiments, time_experiments
-    
-    
+    return force_experiments, flexural_strength, unc_flexural_strength, \
+            volume_beams, experiments, time_experiments, flexural_strength_buoyancy, \
+            flexural_strength_threepoint, flexural_strength_cantilever, flexural_strength_cantilever_buoyancy
+  
 #------ For the first Tests made on the 20250130 --------#
 data_files_test = ['TEST_20250130_CANTILEVER_1_BY_BEACH.csv',
             'TEST_20250130_CANTILEVER_2_LEFT_ONE.csv',     
@@ -187,3 +200,61 @@ file_dim_07022025 = '20250207_FSTD_Bending.txt'
 dir_07022025      = '/aos/home/fstdenis/ICE_TANK/mechanical_properties/Experiments/20250207_Felix/'
 Floe_07022025  = True
 Temperature_07022025  = True
+
+
+#------ For the tests on the unbroken-up ice for 12/02/2025 --------#
+
+data_files_12022025 = ['20250212_1_cantilever.CSV',
+            '20250212_2_3points.CSV',     
+            '20250212_3_cantilever.CSV', 
+            '20250212_4_3points.CSV', 
+            '20250212_5_cantilever.CSV', 
+            '20250212_6_3points.CSV']
+
+file_dim_12022025 = '20250212_FSTD_Bending.txt'
+dir_12022025      = '/aos/home/fstdenis/ICE_TANK/mechanical_properties/Experiments/20250212_Felix/'
+Floe_12022025  = False
+Temperature_12022025  = True
+
+#------ For the tests on the unbroken-up ice for 13/02/2025 --------#
+
+data_files_13022025 = ['20250213_1_3points.CSV',
+            '20250213_2_3points.CSV',     
+            '20250213_3_3points.CSV', 
+            '20250213_4_3points.CSV', 
+            '20250213_5_3points.CSV', 
+            '20250213_6_3points.CSV']
+
+file_dim_13022025 = '20250213_FSTD_Bending.txt'
+dir_13022025      = '/aos/home/fstdenis/ICE_TANK/mechanical_properties/Experiments/20250213_Felix/'
+Floe_13022025  = False
+Temperature_13022025  = True
+
+LittData_FlexStrength_Laboratory = {'flexural':np.array([1805.9, 
+                                                2169.3, 
+                                                1254.7, 
+                                                2025.9, 
+                                                2047, 
+                                                2810.5, 
+                                                1226.6, 
+                                                867.9, 
+                                                1411.5, 
+                                                1715.1]), 
+                                    'unc_flexural':np.array([97, 
+                                                    999.6, 
+                                                    561.8, 
+                                                    444.2, 
+                                                    486.6, 
+                                                    1347.5, 
+                                                    486.9, 
+                                                    867.9, 
+                                                    479.5, 
+                                                    340.4])
+}
+    
+    
+    
+    
+    
+    
+    

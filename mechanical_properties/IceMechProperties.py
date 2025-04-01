@@ -11,6 +11,18 @@ All of the stresses are in MPa.
 """
 plt.style.use('science')
 
+def maxforce_3point(force, time,threshold_force = -10, threshold_time = 0.001 ):
+    
+    diffs_force = np.diff(force)
+    diffs_time = np.diff(time)
+
+    # Identify indices where the decrease is sharp
+    #Take the first one (subsequent ones are the one where the gauge hit the plate)
+    idx_max_force = np.where((diffs_force < threshold_force) & (diffs_time>threshold_time))[0][0]
+
+    max_force = force[idx_max_force
+                      ]
+    return max_force, idx_max_force
 
 def threepointbending(F, l, b, hi, unc_dim, unc_f, uncertainty = False):
     """
@@ -38,8 +50,6 @@ def threepointbending(F, l, b, hi, unc_dim, unc_f, uncertainty = False):
     else:
         return sigma_f
     
-
-
 def cantilever(F, lb, b, hi, unc_dim, unc_f, uncertainty = False):
     """
     This function computes the flexural strength from cantiliver tests. 
@@ -119,14 +129,59 @@ def Aly19(volume, v_1 = 0.01):
     sigma_f_fresh = 0.840*(volume/v_1)**(-0.13)
     
     return sigma_f_fresh
+
+def deflection_air_cantilever(x, Force, L, b, h, E):
     
+    I_moment = (b*h**3)/12
+    
+    y = Force*x**2*(3*L-x)/(6*E*I_moment)
+    
+    return y
+
+def deflection_buoyancy_cantilever(x, Force, L, b, h, E, rhow = 1, g = 9.80):
+    
+    I_moment = (b*h**3)/12
+    
+    Lamda = (E*I_moment/(rhow*g*b))**(1/4)
+    
+    x_prime = x/(np.sqrt(2)*Lamda)
+    x_prime_length = (L-x)/(np.sqrt(2)*Lamda)
+    
+    Length_caract = L/(np.sqrt(2)*Lamda)
+    
+
+    F = Force/(E*I_moment)
+    
+    y = np.sqrt(2)*F*Lamda**(3)/(E*I_moment)*(np.sinh(x_prime)*np.cos(x_prime_length)*np.cosh(Length_caract) - 
+                                              np.sin(x_prime)*np.cosh(x_prime_length)*np.cos(Length_caract))/(
+                                              np.cosh(Length_caract)**2 + np.cos(Length_caract)**2)
+    return y
+
+def sigmaf_buoyancyCanti(Force, L, b, h, E, rhow = 998, g = 9.80):
+    
+    I_moment = (b*h**3)/12
+    
+    Lamda = (E*I_moment/(rhow*g*b))**(1/4)
+    
+    
+    Length_caract = L/(np.sqrt(2)*Lamda)
+
+    F = Force
+    
+    sigmaf = (6*F*L/((b*h**2)))*(np.sqrt(2)*Lamda/L)*((np.cos(Length_caract)*np.sinh(Length_caract)+
+                                                np.cosh(Length_caract)*np.sin(Length_caract))/
+                                                (np.cosh(Length_caract)**2 + np.cos(Length_caract)**2))
+    
+    return sigmaf
+
+
+  
 v_brine = np.linspace(0, 0.25, 1000)
 d = np.linspace(0, 1, 1000)
 plotting = False
-
+ElasticModulus = 5*1e9
 
 exp_flex, sigma_f_exp, unc_sigmaf_exp = np.loadtxt('Theory/IceMechProp_Aly19.txt', skiprows = 1, unpack = True, dtype = str)
-
 
 sigf_timco  = Timco94(v_brine)
 sigf_dyk    = Dykins68(v_brine)
