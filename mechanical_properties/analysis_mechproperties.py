@@ -65,7 +65,7 @@ dim_data = {}
 for key, d in data_sets.items():
     _, dim_data[key] = data.read_data(d["dir"], d["files"][0], d["dim_file"], 1, Floe = d["floe"], Temperature = d["temp"])
 
-
+print(len(dim_data))
 #------ Break up Experiment #1 -------#
 data_bup1 = data.extract_data(data_sets["breakup_1"]['dir'],
                     data_sets["breakup_1"]['files'], 
@@ -106,14 +106,6 @@ data_samp4 = data.extract_data(data_sets["samples_4"]['dir'],
                     data_sets["samples_4"]['temp'])
 
 if plotting:
-    plot.plot_flexstrength(data_bup1, 
-                        data_samp1, 
-                        dim_data['breakup_1'],
-                        dim_data['samples_1'], 
-                        data_sets["breakup_1"]['dir'], 
-                        data_sets["samples_1"]['dir'], 
-                        data_sets["breakup_1"]['temp'], 
-                        data_sets["breakup_1"]['floe'])
 
     plot.plot_time_load(data_samp1, 
                         data_bup1, 
@@ -128,7 +120,7 @@ if plotting:
     plot.plot_time_load_experiment(data_bup1, data_sets["breakup_1"]['dir'])
     plot.plot_time_load_experiment(data_bup2, data_sets["breakup_2"]['dir'])
 
-
+plot.plot_flexural_strength_space(dim_data, [data_samp1, data_bup1, data_samp2, data_bup2, data_samp3, data_samp4])
 #----- Analysing all of the Statistics of the Tests Performed ------#
 
 #---- Break-Up Data ----#
@@ -151,19 +143,16 @@ time_samp4, flexural_strength_buoyancy_samp4, sigmaf_3pt_samp4, sigmaf_cant_samp
 
 #----- Analysis of the flexural strength ------#
 
+volumes = np.append(vol_beams_bup1, np.append(vol_beams_bup2, \
+    np.append(vol_beams_samp1, np.append(vol_beams_samp2, np.append(vol_beams_samp3, vol_beams_samp4)))))
+
+
+print('Mean volume: ', np.mean(volumes))
+#--- Flexural Strength by Experiments ---#
 flex_strength_tot = np.append(flex_strength_bup1, flex_strength_bup2)
 flex_strength_samp = np.append(flex_strength_samp1, np.append(flex_strength_samp2, np.append(flex_strength_samp3, flex_strength_samp4)))
 flex_strength_samp_buoyancy = np.append(flexural_strength_buoyancy_samp1, np.append(flexural_strength_buoyancy_samp2, np.append(flexural_strength_buoyancy_samp3, flexural_strength_buoyancy_samp4)))
 flex_strength_litt = data.LittData_FlexStrength_Laboratory['flexural']/1000 #Be in MPa
-
-
-flex_strength_tot_3pt = np.append(sigmaf_3pt_bup1, np.append(sigmaf_3pt_bup2, \
-    np.append(sigmaf_3pt_samp1, np.append(sigmaf_3pt_samp2, np.append(sigmaf_3pt_samp3, sigmaf_3pt_samp4)))))
-flex_strength_tot_cant = np.append(sigmaf_cant_bup1, np.append(sigmaf_cant_bup2, \
-    np.append(sigmaf_cant_samp1, np.append(sigmaf_cant_samp2, np.append(sigmaf_cant_samp3, sigmaf_cant_samp4)))))
-flex_strength_tot_cant_B = np.append(sigmaf_cantB_bup1, np.append(sigmaf_cantB_bup2, \
-    np.append(sigmaf_cantB_samp1, np.append(sigmaf_cantB_samp2, np.append(sigmaf_cantB_samp3, sigmaf_cantB_samp4)))))
-
 
 mean_flex_litt = np.mean(flex_strength_litt)
 mean_flex_strength = np.mean(flex_strength_tot)
@@ -171,38 +160,61 @@ mean_flex_samp = np.mean(flex_strength_samp)
 mean_flex_buoyancy = np.mean(flex_strength_samp_buoyancy)
 std_flex = np.std(flex_strength_tot)
 std_litt = np.std(flex_strength_litt)
+std_samp = np.std(flex_strength_samp)
+std_sampB = np.std(flex_strength_samp_buoyancy)
 
-print(mean_flex_strength, mean_flex_samp, mean_flex_buoyancy, std_litt)
+print("Sigmaf Post: ", mean_flex_strength/1e6, "Sigmaf Pre: ",mean_flex_samp/1e6,\
+    "Sigmaf Pre-Buoyancy: ", mean_flex_buoyancy/1e6, "Sigmaf Litt: ", mean_flex_litt, "std litt: ", std_litt, "std Pre: ", std_flex/1e6, std_samp/1e6, std_sampB/1e6)
 
-plt.figure()
-ax = plt.axes()
-plt.hist(flex_strength_tot/1e6, bins = 10, alpha = 0.5, facecolor = 'darkorange', edgecolor =  'None', fill = True)
-plt.hist(flex_strength_samp/1e6, bins = 10, alpha = 0.5,facecolor = 'darkgreen', edgecolor =  'None', fill = True)
+print((mean_flex_buoyancy-mean_flex_samp)/mean_flex_samp*100)
+
+#--- Flexural Strength by Type of Tests ---#
+flex_strength_tot_3pt = np.append(sigmaf_3pt_bup1, np.append(sigmaf_3pt_bup2, \
+    np.append(sigmaf_3pt_samp1, np.append(sigmaf_3pt_samp2, np.append(sigmaf_3pt_samp3, sigmaf_3pt_samp4)))))
+flex_strength_tot_cant = np.append(sigmaf_cant_bup1, np.append(sigmaf_cant_bup2, \
+    np.append(sigmaf_cant_samp1, np.append(sigmaf_cant_samp2, np.append(sigmaf_cant_samp3, sigmaf_cant_samp4)))))
+flex_strength_tot_cant_B = np.append(sigmaf_cantB_bup1, np.append(sigmaf_cantB_bup2, \
+    np.append(sigmaf_cantB_samp1, np.append(sigmaf_cantB_samp2, np.append(sigmaf_cantB_samp3, sigmaf_cantB_samp4)))))
+
+mean_3pt = np.mean(flex_strength_tot_3pt)
+mean_cant = np.mean(flex_strength_tot_cant)
+mean_cant_buoyancy = np.mean(flex_strength_tot_cant_B)
+std_3pt = np.std(flex_strength_tot_3pt)
+std_cant = np.std(flex_strength_tot_cant)
+
+print(mean_3pt/1e6, mean_cant/1e6, mean_cant_buoyancy/1e6, std_3pt/1e6, std_cant/1e6)
+
+fig, (ax1, ax2) = plt.subplots(1, 2, sharex= True, sharey=True, figsize = (8, 3))
+
+# plt.figure()
+# ax = plt.axes()
+# ax1.set_aspect('equal')
+ax1.hist(flex_strength_tot/1e6, bins = 10, alpha = 0.5, facecolor = 'darkorange', edgecolor =  'None', fill = True)
+ax1.hist(flex_strength_samp/1e6, bins = 10, alpha = 0.5,facecolor = 'darkgreen', edgecolor =  'None', fill = True)
 # plt.hist(flex_strength_samp_buoyancy/1e6, bins = 10, alpha = 0.5,facecolor = 'darkred', edgecolor =  'None', fill = True)
-plt.axvline(mean_flex_strength/1e6, color = 'darkorange', linestyle = '--', label = 'Mean Post-Break-Up')
-plt.axvline(mean_flex_litt, color = 'black', label = 'Mean Litt.')
-plt.axvline(mean_flex_samp/1e6, linestyle = ':', color = 'green', label = 'Mean Pre-Break-Up')
-plt.axvline(mean_flex_buoyancy/1e6, linestyle = '-', zorder = 1, linewidth = 2, color = 'darkred', label = 'Mean Buoyancy')
-ax.axvspan(mean_flex_litt - std_litt, mean_flex_litt+ std_litt, alpha = 0.3, color = 'k')
-plt.ylabel('Count')
-plt.legend(loc='upper right')
-plt.xlabel(r'$\sigma_c$ (MPa)')
-plt.savefig('Flexural_strength_hist_tot.png')
+ax1.axvline(mean_flex_strength/1e6, color = 'darkorange', linestyle = '--', label = 'Mean Post-Break-Up')
+ax1.axvline(mean_flex_litt, color = 'black', label = 'Mean Litt.')
+ax1.axvline(mean_flex_samp/1e6, linestyle = ':', color = 'green', label = 'Mean Pre-Break-Up')
+ax1.axvline(mean_flex_buoyancy/1e6, linestyle = '-', zorder = 1, linewidth = 2, color = 'darkred', label = 'Mean Buoyancy')
+ax1.axvspan(mean_flex_litt - std_litt, mean_flex_litt+ std_litt, alpha = 0.3, color = 'k')
+ax1.set_ylabel('Count')
+ax1.legend(loc='upper right')
+ax1.set_xlabel(r'$\sigma_c$ (MPa)')
+ax1.text(-0.1, 1.01, "(a)", size = 14, fontweight="heavy", transform=ax1.transAxes)
 
-plt.figure()
-ax = plt.axes()
-plt.hist(flex_strength_tot_3pt/1e6, bins = 10, alpha = 0.5, facecolor = 'darkorange', fill = False, hatch = '/')
-plt.hist(flex_strength_tot_cant/1e6, bins = 5, alpha = 0.5,facecolor = 'darkgreen', fill = False, hatch = 'o')
-plt.hist(flex_strength_tot_cant_B/1e6, bins = 5, alpha = 0.5,facecolor = 'darkred', fill = False, hatch = '*')
-# plt.axvline(mean_flex_strength/1e6, color = 'darkorange', linestyle = '--', label = 'Mean Post-Break-Up')
-# plt.axvline(mean_flex_litt, color = 'black', label = 'Mean Litt.')
-# plt.axvline(mean_flex_samp/1e6, linestyle = ':', color = 'green', label = 'Mean Pre-Break-Up')
+ax2.text(-0.1, 1.01, "(b)", size = 14, fontweight="heavy", transform=ax2.transAxes)
+ax2.hist(flex_strength_tot_3pt/1e6, bins = 10, alpha = 0.5, facecolor = 'darkblue', fill = True)#, hatch = '/')
+ax2.hist(flex_strength_tot_cant/1e6, bins = 5, alpha = 0.5,facecolor = 'darkgreen', fill = True)#, hatch = 'o')
+ax2.hist(flex_strength_tot_cant_B/1e6, bins = 5, alpha = 0.5,facecolor = 'darkred', fill = True)#, hatch = '*')
+ax2.axvline(mean_3pt/1e6, color = 'darkorange', linestyle = '--', label = 'Mean 3pt.')
+ax2.axvline(mean_cant/1e6, color = 'black', linestyle = '--', label = 'Mean Cant.')
+ax2.axvline(mean_cant_buoyancy/1e6, zorder = 1, linewidth = 2, color = 'darkred', label = 'Mean B.-Cant.')
 # plt.axvline(mean_flex_buoyancy/1e6, linestyle = '-', zorder = 1, linewidth = 2, color = 'darkred', label = 'Mean Buoyancy')
-# ax.axvspan(mean_flex_litt - std_litt, mean_flex_litt+ std_litt, alpha = 0.3, color = 'k')
-plt.ylabel('Count')
-plt.legend(loc='upper right')
-plt.xlabel(r'$\sigma_c$ (MPa)')
-plt.savefig('Flexural_strength_tests_tot.png')
+ax2.axvspan((mean_3pt - std_3pt)/1e6, (mean_3pt+ std_3pt)/1e6, alpha = 0.2, color = 'k')
+# plt.ylabel('Count')
+ax2.legend(loc='upper right')
+ax2.set_xlabel(r'$\sigma_c$ (MPa)')
+plt.savefig('Flexural_strength.png')
 
 
 

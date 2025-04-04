@@ -91,6 +91,7 @@ def extract_data(dir_files, data_files, file_dim, Floe, Temp, f1 = 10, f2 = 100,
     flexural_strength_cantilever  = np.empty(0)
     flexural_strength_cantilever_buoyancy = np.empty(0)
     flexural_strength_threepoint = np.empty(0)
+    unc_flexural_strength_threepoint = np.empty(0)
     
     _, dic_dim = read_data(dir_files, data_files[0], file_dim, 1, Floe = Floe, Temperature=Temp )
     lengths = dic_dim["lengths"]
@@ -115,7 +116,7 @@ def extract_data(dir_files, data_files, file_dim, Floe, Temp, f1 = 10, f2 = 100,
         length_exp, lb_exp, width_exp, thickness_exp = \
             lengths[exp]/100, lb[exp]/100, width[exp]/100, thickness[exp]/100
         # print('Maximum',  max_force)
-        volume_beams[exp] = length_exp*width_exp*thickness_exp*(100**3)
+        volume_beams[exp] = length_exp*width_exp*thickness_exp
         
         if types_exp[exp] == 'cant':
             max_force= np.max(force_exp)
@@ -132,6 +133,7 @@ def extract_data(dir_files, data_files, file_dim, Floe, Temp, f1 = 10, f2 = 100,
             flexural_strength[exp], unc_flexural_strength[exp] = \
                 me.threepointbending(max_force, length_exp, width_exp, thickness_exp, unc_dim,unc_force, uncertainty=True)
             flexural_strength_threepoint = np.append(flexural_strength_threepoint, flexural_strength[exp])
+            unc_flexural_strength_threepoint = np.append(unc_flexural_strength_threepoint, unc_flexural_strength[exp])
             
             flexural_strength_buoyancy[exp], _ = me.threepointbending(max_force, length_exp, width_exp, thickness_exp, unc_dim,unc_force, uncertainty=True)
         

@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import IceMechProperties as me
-from scipy.signal import find_peaks
+import matplotlib.lines as mlines
 
 def plot_flexstrength(data_bup, data_samp, dic_dim_exp, dic_dim_samp, dir_files, dir_files_samp, Temp, Floe):
     
@@ -78,9 +78,91 @@ def plot_flexstrength(data_bup, data_samp, dic_dim_exp, dic_dim_samp, dir_files,
     
     return 
 
+def plot_flexural_strength_space(dim_data, data_flex):
+    
+    colors = ['steelblue', 'darkgreen', 'darkorange', 'darkred', 'darkviolet', 'gray']
+    fig = plt.figure()
+    ax = plt.axes()
+    flexstrength = np.empty(0)
+    flex_strength_door = np.empty(0)
+    flex_strength_opposite = np.empty(0)
+    # labels = ['Exp. 1']
+    xlocations = np.empty(0)
+
+    for i, dic in enumerate(dim_data):
+        
+        print(dic)
+        
+        # ax.text(0.1, 0.9, "({})".format(exp+1), size = 14, fontweight="heavy", transform=ax.transAxes)
+        
+        x_loc           = dim_data[dic]['x']
+        xlocations = np.append(xlocations, x_loc)
+        y_loc           = dim_data[dic]['y']
+        data_exp = data_flex[i]
+        
+        _, flex_strength, unc_flexural_strength, _, _, \
+        _, _, _, _, _ = data_exp
+        c = 0
+        for y in y_loc:
+            if y < 50 : 
+                
+                plt.scatter(x_loc[c], flex_strength[c]/1e6,c = colors[i], marker = '*', zorder = 2)
+                flex_strength_door = np.append(flex_strength_door, flex_strength[c])
+            else:
+                plt.scatter(x_loc[c], flex_strength[c]/1e6,c = colors[i], marker = '^', zorder = 2)
+                flex_strength_opposite = np.append(flex_strength_opposite, flex_strength[c])
+            c+=1
+        flexstrength = np.append(flexstrength, flex_strength)
+    
+    
+    mean = np.mean(flexstrength/1e6)
+    std = np.std(flexstrength/1e6)
+    corr = np.corrcoef(xlocations, flexstrength)
+    print('Corr loc: ', corr)
+    print('Mean everything: ', mean, std)
+    mean_door = np.mean(flex_strength_door)/1e6
+    mean_opp = np.mean(flex_strength_opposite)/1e6
+    print(mean_door, mean_opp)
+    
+    # plt.axis('equal')
+    plt.xlabel(r'$x$ (cm)')
+    plt.ylabel(r'$\sigma_f$ (MPa)')
+    plt.axhspan(mean-std, mean+std, alpha = 0.1, color = 'blue')
+    # plt.axhline(mean_door, zorder = 1, color = 'k')
+    # plt.axhline(mean, zorder = 1, color = 'orange')
+    # plt.axhline(mean_opp, zorder = 1, color = 'r')
+    door = mlines.Line2D([], [], color='k', marker='*', linestyle='None',
+                          markersize=10, label='Door Side')
+    ac = mlines.Line2D([], [], color='k', marker='^', linestyle='None',
+                          markersize=10, label='A.C. Side')
+    exp1 = mlines.Line2D([], [], color='steelblue', marker= 'None', linestyle='None',
+                          markersize=10, label='4 Feb. 2025')
+    exp2 = mlines.Line2D([], [], color='darkgreen', marker = 'None', linestyle='None',
+                          markersize=10, label='5 Feb. 2025')
+    exp3 = mlines.Line2D([], [], color='darkorange', marker='None', linestyle='None',
+                          markersize=10, label='6 Feb. 2025')
+    exp4 = mlines.Line2D([], [], color='darkred', marker='None', linestyle='None',
+                          markersize=10, label='7 Feb. 2025')
+    exp5 = mlines.Line2D([], [], color='darkviolet', marker='None', linestyle='None',
+                          markersize=10, label='12 Feb. 2025')
+    exp6 = mlines.Line2D([], [], color='gray', marker='None', linestyle='None',
+                          markersize=10, label='13 Feb. 2025')
+                          
+    fig.legend(loc='center left', bbox_to_anchor=(0.85, 0.6), 
+               handles=[door, ac, exp1, exp2, exp3, exp4, exp5, exp6], labelcolor='linecolor')
+    plt.grid()
+    plt.legend()
+    plt.savefig('loc.png')
+        
+   
+   
+    
+    
+    return
+
 def plot_time_load_experiment(data, dir_files):
 
-    force_exps, _, _, _, _, time_exps, _ = data
+    force_exps, _, _, _, _, time_exps, _, _, _, _ = data
 
     if len(force_exps) == 6:
         fig, axes = plt.subplots(nrows=2, ncols=3, sharex=True, figsize=(8, 4), constrained_layout=True)
@@ -131,9 +213,9 @@ def plot_time_load_experiment(data, dir_files):
 def plot_time_load(data_samp, data_bup, dir_files, dir_files_samp):
     
     force_exp_samp, flex_strength_samp, unc_flex_strength_samp, vol_beams_samp, exp_samp, \
-    time_samp, _ = data_samp
+    time_samp, _, _, _,_ = data_samp
     force_exp_bup, flex_strength_bup, unc_flex_strength_bup, vol_beams_bup, exp_bup, \
-    time_bup, _ = data_bup
+    time_bup, _, _, _ ,_= data_bup
     
     
     fig, axes = plt.subplots(nrows=7, ncols=6, figsize=(16, 14), constrained_layout=True)
@@ -169,7 +251,7 @@ def plot_time_load(data_samp, data_bup, dir_files, dir_files_samp):
     # for expnum in range(0, len(force_exp_bup)):
         
     
-    fig3, ax3 = plt.figure(figsize = (6, 4)), plt.axes()
+    fig3, ax3 = plt.figure(figsize = (6, 5)), plt.axes()
     expnum = 12
     expnum_Samp = 4
 
@@ -200,41 +282,15 @@ def plot_time_load(data_samp, data_bup, dir_files, dir_files_samp):
     ax4.axhline(np.max(force_Samp), c = 'blue', linestyle = '--', zorder = 3)
     
     # plt.legend()
-    plt.figtext(0.95, 0.8, 'Cantilever', color = 'blue', size = 14)
-    plt.figtext(0.95, 0.72, 'Three Point Bending', color = 'black', size = 14)
+    plt.figtext(0.15, 0.8, 'Cantilever', color = 'blue', size = 14)
+    plt.figtext(0.15, 0.72, 'Three Point Bending', color = 'black', size = 14)
+    # ax3.set_aspect('equal')
+    # ax4.set_aspect('equal')
     # plt.xlim(4, 9)
     ax3.set_ylabel('Force (N)', fontsize = 14)
     ax3.set_xlabel('Time (s)', fontsize = 14)
     plt.savefig(dir_files+'force_load_{}_bup.png'.format(expnum))
     
-    
-    # for expnum in range(0, len(force_exp_bup)):
-    #     fig3, ax3 = plt.figure(figsize = (8, 4)), plt.axes()
-    #     # expnum = 12
-    #     # time = 
-    #     # ind_max = np.argmax(force_exp_bup[expnum])
-    #     # ind_maxs = np.argsort(force_exp_bup[expnum])[::-1]
-    #     diffs_force = np.diff(force_exp_bup[expnum])
-    #     diffs_time = np.diff(time_bup[expnum])
-
-    #     # Define a threshold for a "sharp decrease"
-    #     threshold_force = -10  # Adjust this based on your data
-    #     threshold_time = 0.001
-        
-    #     print(np.shape(time_samp[expnum]), np.shape(force_exp_bup[expnum]))
-    #     # Identify indices where the decrease is sharp
-    #     sharp_decrease_indices = np.where((diffs_force < threshold_force) & (diffs_time>threshold_time))[0][0]
-    #     print(sharp_decrease_indices)
-        
-        
-    #     # peaks, _ = find_peaks(force_exp_samp[expnum], distance=100)
-    #     # ax3.set_box_aspect(aspect=1)
-    #     ax3.plot(time_bup[expnum], force_exp_bup[expnum], color = 'b')
-    #     ax3.scatter(time_bup[expnum][sharp_decrease_indices], force_exp_bup[expnum][sharp_decrease_indices], marker = '*', color = 'black')
-    #     # plt.xlim(4, 9)
-    #     plt.ylabel('Force (N)', fontsize = 14)
-    #     plt.xlabel('Time (s)', fontsize = 14)
-    #     plt.savefig(dir_files+'force_load_{}_bup.png'.format(expnum))
     
     
     return 

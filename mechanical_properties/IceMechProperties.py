@@ -179,7 +179,7 @@ def sigmaf_buoyancyCanti(Force, L, b, h, E, rhow = 998, g = 9.80):
 v_brine = np.linspace(0, 0.25, 1000)
 d = np.linspace(0, 1, 1000)
 plotting = False
-ElasticModulus = 5*1e9
+ElasticModulus = 3.2*1e9
 
 exp_flex, sigma_f_exp, unc_sigmaf_exp = np.loadtxt('Theory/IceMechProp_Aly19.txt', skiprows = 1, unpack = True, dtype = str)
 
